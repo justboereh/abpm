@@ -1,8 +1,9 @@
+use crate::config;
+use crate::package;
+use crate::writer;
 use clap::ArgMatches;
 use colored::*;
 use reqwest::Response;
-
-mod package;
 
 const PACKAGE_BASE_URL: &str = "https://registry.npmjs.org/";
 
@@ -10,6 +11,7 @@ pub async fn install(matches: &ArgMatches) {
     let packages = matches.get_many::<String>("packages").unwrap();
     let _dev = matches.get_flag("dev");
     let _offline = matches.get_flag("offline");
+    let _config = config::new();
 
     for package in packages {
         let version_symbol_index = package.chars().skip(1).position(|c| c == '@');
@@ -28,12 +30,11 @@ pub async fn install(matches: &ArgMatches) {
             reqwest::get(String::from(PACKAGE_BASE_URL.to_owned() + &package_name)).await;
 
         if response.is_err() {
-            println!(
-                "{} Fetching package: {} -- {:?}",
-                " ERROR ".on_red().white(),
-                package_name,
+            writer::error(format!(
+                "Fetching package: {}: {:?}",
+                package_name.red(),
                 response.err()
-            );
+            ));
 
             std::process::exit(0);
         }
@@ -41,12 +42,11 @@ pub async fn install(matches: &ArgMatches) {
         let dist = get_package_dist(response.unwrap(), &version).await;
 
         if dist.is_err() {
-            println!(
-                "{} Getting package dist: {} -- {:?}",
-                " ERROR ".on_red().white(),
-                package_name,
+            writer::error(format!(
+                "Getting package {} dist: {:?}",
+                package_name.red(),
                 dist.err()
-            );
+            ));
 
             std::process::exit(0);
         }

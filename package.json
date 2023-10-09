@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "test:install": "cargo build && cd test && \"../target/debug/abpm.exe\" install vite @vueuse/core vue@latest nuxt@3.7.4"
+  }
+}
