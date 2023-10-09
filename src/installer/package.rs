@@ -1,49 +1,48 @@
 use std::collections::HashMap;
 
 use serde::Deserialize;
-use serde_json::value::RawValue;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct PackageResponse {
-    _id: String,
-    _rev: String,
-    name: String,
-    #[serde(rename = "dist-tags")]
-    dist_tags: HashMap<String, String>,
-    pub versions: HashMap<String, HashMap<String, Box<RawValue>>>,
-    time: Box<RawValue>,
-    maintainers: Box<RawValue>,
-    description: String,
-    homepage: String,
-    keywords: Box<RawValue>,
-    repository: Box<RawValue>,
-    author: Box<RawValue>,
-    bugs: Box<RawValue>,
-    license: String,
-    readme: String,
-    #[serde(rename = "readmeFilename")]
-    readme_filename: String,
+    // _id: String,
+    // _rev: String,
+    // name: String,
+    // #[serde(rename = "dist-tags")]
+    // dist_tags: HashMap<String, String>,
+    pub versions: HashMap<String, PackageVersion>,
+    // time: Box<RawValue>,
+    // maintainers: Box<RawValue>,
+    // description: String,
+    // homepage: String,
+    // keywords: Box<RawValue>,
+    // repository: Box<RawValue>,
+    // author: Box<RawValue>,
+    // bugs: Box<RawValue>,
+    // license: String,
+    // readme: String,
+    // #[serde(rename = "readmeFilename")]
+    // readme_filename: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct PackageVersion {
-    pub name: String,
-    version: String,
-    description: String,
-    main: String,
-    typings: String,
-    module: String,
-    scripts: HashMap<String, String>,
-    dist: HashMap<String, Box<RawValue>>,
+    // pub name: String,
+    // version: String,
+    // description: String,
+    // main: String,
+    // typings: String,
+    // module: String,
+    // scripts: HashMap<String, String>,
+    pub dist: PackageVersionDist,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct PackageVersionDist {
-    integrity: String,
-    shasum: String,
-    tarball: String,
+    pub integrity: Option<String>,
+    pub shasum: Option<String>,
+    pub tarball: Option<String>,
     #[serde(rename = "fileCount")]
-    file_count: usize,
+    pub file_count: Option<u16>,
     #[serde(rename = "unpackedSize")]
-    unpacked_size: u64,
+    pub unpacked_size: Option<u64>,
 }

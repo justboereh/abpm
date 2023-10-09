@@ -1,10 +1,6 @@
-use std::collections::HashMap;
-
 use clap::ArgMatches;
-
-use package::PackageResponse;
-use serde::{de, Deserializer};
-use serde_json::value::RawValue;
+use colored::*;
+use reqwest::Response;
 
 mod package;
 
@@ -12,6 +8,8 @@ const PACKAGE_BASE_URL: &str = "https://registry.npmjs.org/";
 
 pub async fn install(matches: &ArgMatches) {
     let packages = matches.get_many::<String>("packages").unwrap();
+    let _dev = matches.get_flag("dev");
+    let _offline = matches.get_flag("offline");
 
     for package in packages {
         let version_symbol_index = package.chars().skip(1).position(|c| c == '@');
@@ -30,25 +28,50 @@ pub async fn install(matches: &ArgMatches) {
             reqwest::get(String::from(PACKAGE_BASE_URL.to_owned() + &package_name)).await;
 
         if response.is_err() {
-            return;
+            println!(
+                "{} Fetching package: {} -- {:?}",
+                " ERROR ".on_red().white(),
+                package_name,
+                response.err()
+            );
+
+            std::process::exit(0);
         }
 
-        let data = response.unwrap().json::<PackageResponse>().await;
+        let dist = get_package_dist(response.unwrap(), &version).await;
 
-        if data.is_err() {
-            println!("package errored: {} -- {:?}", package_name, data.err());
+        if dist.is_err() {
+            println!(
+                "{} Getting package dist: {} -- {:?}",
+                " ERROR ".on_red().white(),
+                package_name,
+                dist.err()
+            );
 
-            return;
+            std::process::exit(0);
         }
 
-        let versions = data.unwrap().versions;
-        let last_version = versions
-            .clone()
-            .into_values()
-            .skip(versions.clone().len() - 1)
-            .next()
-            .unwrap();
-
-        println!("{:?}", last_version);
+        println!("{:?}", dist.ok());
     }
+}
+
+async fn get_package_dist(
+    res: Response,
+    ver: &String,
+) -> Result<package::PackageVersionDist, Box<dyn std::error::Error>> {
+    let contents = res.text().await?;
+    let response = serde_json::from_str::<package::PackageResponse>(&contents.as_str())?;
+    let version = if ver.eq("latest") {
+        let values = response.versions.values();
+
+        values
+            .clone()
+            .skip(values.clone().len() - 1)
+            .next()
+            .unwrap()
+    } else {
+        response.versions.get(ver.as_str()).unwrap()
+    };
+
+    return Ok(version.dist.clone());
 }
